@@ -12,13 +12,19 @@ int pnum;  // number updated when producer runs.
 int csum;  // sum computed using pnum when consumer runs.
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-
+pthread_cond_t hasChangedPNUM = PTHREAD_COND_INITIALIZER;
+int producedConsumed = 1;
 int (*pred)(int); // predicate indicating number to be consumed
 
 int produceT() {
   pthread_mutex_lock(&mutex);
+  while(!producedConsumed){
+    pthread_cond_wait(&hasChangedPNUM, &mutex);
+  }
   scanf("%d",&pnum);
+  producedConsumed = 0;
   pthread_mutex_unlock(&mutex);
+  pthread_cond_signal(&hasChangedPNUM);
   return pnum;
   
 }
@@ -40,8 +46,14 @@ void *Produce(void *a) {
 
 int consumeT() {
   pthread_mutex_lock(&mutex);
+  while (producedConsumed)
+  {
+    pthread_cond_wait(&hasChangedPNUM, &mutex);
+  }
   if ( pred(pnum) ) { csum += pnum; }
+  producedConsumed = 1;
   pthread_mutex_unlock(&mutex);
+  pthread_cond_signal(&hasChangedPNUM);
   return pnum;
   
 }
