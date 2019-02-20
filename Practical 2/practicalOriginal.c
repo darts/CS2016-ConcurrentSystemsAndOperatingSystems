@@ -11,21 +11,10 @@
 int pnum;  // number updated when producer runs.
 int csum;  // sum computed using pnum when consumer runs.
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t hasChangedPNUM = PTHREAD_COND_INITIALIZER;
-int producedConsumed = 1;
-
 int (*pred)(int); // predicate indicating number to be consumed
 
 int produceT() {
-  pthread_mutex_lock(&mutex);
-  while(!producedConsumed){
-    pthread_cond_wait(&hasChangedPNUM, &mutex);
-  }
   scanf("%d",&pnum);
-  producedConsumed = 0;
-  pthread_mutex_unlock(&mutex);
-  pthread_cond_signal(&hasChangedPNUM);
   return pnum;
 }
 
@@ -41,20 +30,11 @@ void *Produce(void *a) {
     printf("PRODUCED %d\n",p);
   }
   printf("EXIT-P\n");
-  pthread_exit(NULL);
 }
 
 
 int consumeT() {
-  pthread_mutex_lock(&mutex);
-  while (producedConsumed)
-  {
-    pthread_cond_wait(&hasChangedPNUM, &mutex);
-  }
   if ( pred(pnum) ) { csum += pnum; }
-  producedConsumed = 1;
-  pthread_mutex_unlock(&mutex);
-  pthread_cond_signal(&hasChangedPNUM);
   return pnum;
 }
 
@@ -70,7 +50,6 @@ void *Consume(void *a) {
     printf("CONSUMED %d\n",csum);
   }
   printf("EXIT-C\n");
-  pthread_exit(NULL);
 }
 
 
@@ -106,9 +85,6 @@ int main (int argc, const char * argv[]) {
 	pthread_join( prod, NULL);
 	pthread_join( cons, NULL);
 
-  //tidy up
-  pthread_mutex_destroy(&mutex);
-  pthread_cond_destroy(&hasChangedPNUM);
 
   printf("csum=%d.\n",csum);
 
