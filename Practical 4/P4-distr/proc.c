@@ -52,28 +52,58 @@ scheduler(void)
     runCountTable[i] = 0;
   }
 
+
+  int lowestCurrentRunnable = -1;
+
   while(runnableFound){ // DO NOT MODIFY
     // Enable interrupts on this processor.
     // sti();
     runnableFound = 0; // DO NOT MODIFY
   
     //find program to run
-    int lowestRunnable = 0;
+    lowestCurrentRunnable++;
+    int tmpLowestRunnable = lowestCurrentRunnable;
     for(int i = 0; i < NPROC; i++){
-      p = &ptable.proc[i];
+      p = &ptable.proc[(lowestCurrentRunnable+i)%NPROC];
 
       if(p->state != RUNNABLE)
         continue;
       
-      if(runCountTable[p->pid] < runCountTable[lowestRunnable])
-        lowestRunnable = p->pid;
-
+      if((runCountTable[p->pid] < runCountTable[tmpLowestRunnable]) || (&ptable.proc[tmpLowestRunnable])->state != RUNNABLE)
+        tmpLowestRunnable = p->pid;
     }
+    lowestCurrentRunnable = tmpLowestRunnable;
 
-    p = &ptable.proc[lowestRunnable];
+    // int lowestRunnable = 0;
+    // for(int i = 0; i < NPROC; i++){
+    //   p = &ptable.proc[i];
+
+    //   if(p->state != RUNNABLE)
+    //     continue;
+      
+    //   if(runCountTable[p->pid] < runCountTable[lowestRunnable])
+    //     lowestRunnable = p->pid;
+    // }
+    // lowestOldRunnable = ++lowestCurrentRunnable;
+    //lowestCurrentRunnable = lowestOldRunnable;
+    // for(int i = 0; i < NPROC; i++){
+    //   if(lowestOldRunnable+i >= NPROC)
+    //     lowestOldRunnable = 0;
+    //   p = &ptable.proc[lowestOldRunnable + i];
+
+    //   if(p->state != RUNNABLE)
+    //     continue;
+      
+    //   if(runCountTable[p->pid] < runCountTable[lowestCurrentRunnable])
+    //     lowestCurrentRunnable = p->pid;
+    // }
+
+
+
+    p = &ptable.proc[lowestCurrentRunnable];
     if(p->state != RUNNABLE)
       continue;
-    runCountTable[lowestRunnable]++;
+    runCountTable[lowestCurrentRunnable]++;
     runnableFound = 1; // DO NOT MODIFY/DELETE/BYPASS 
 
     // Switch to chosen process.  It is the process's job
